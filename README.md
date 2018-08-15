@@ -9,7 +9,9 @@ nginx version 1.14.0 source code
 
 	本地目录和容器映射需要绝对路径，需要修改source的值
 
-	docker run -it -d  --mount type=bind,source=F:/git/ng-1.14.0/codes/nginx-1.14.0/,target=/data/webpackages/nginx-1.14.0/ --name web_ng1.14 ngx_1.14.0:v1 
+	docker run -it -d  --mount type=bind,source=F:/git/ng-1.14.0/codes/nginx-1.14.0/,target=/data/webpackages/nginx-1.14.0/ \
+	--mount type=bind,source=F:/git/ng-1.14.0/codes/examples/,target=/data/webpackages/examples/ \
+	--name web_ng1.14 ngx_1.14.0:v1 
 
 	// 查看启动容器
 	docker container ls
