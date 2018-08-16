@@ -26,49 +26,64 @@
     ngx_align((sizeof(ngx_pool_t) + 2 * sizeof(ngx_pool_large_t)),            \
               NGX_POOL_ALIGNMENT)
 
-
+/** 
+ * 内存池清理函数指针
+ */
 typedef void (*ngx_pool_cleanup_pt)(void *data);
 
 typedef struct ngx_pool_cleanup_s  ngx_pool_cleanup_t;
 
+/**
+ * ngx 内存池清理结构
+ */
 struct ngx_pool_cleanup_s {
-    ngx_pool_cleanup_pt   handler;
-    void                 *data;
-    ngx_pool_cleanup_t   *next;
+    ngx_pool_cleanup_pt   handler; /* 清理的函数指针 */
+    void                 *data; /* 数据指针 */
+    ngx_pool_cleanup_t   *next; /* 清理结构 链表 */
 };
 
 
 typedef struct ngx_pool_large_s  ngx_pool_large_t;
 
+/** 
+ * ngx 大内存池 结构
+ */
 struct ngx_pool_large_s {
-    ngx_pool_large_t     *next;
-    void                 *alloc;
+    ngx_pool_large_t     *next; /* 执行ngx内存链表 */
+    void                 *alloc; /* 分配的内存起始地址，free 用到 */
 };
 
-
+/**
+ * ngx内存池数据结构
+ */
 typedef struct {
     u_char               *last;
     u_char               *end;
-    ngx_pool_t           *next;
+    ngx_pool_t           *next;     /* 下一个内存池 */
     ngx_uint_t            failed;
 } ngx_pool_data_t;
 
-
+/** 
+ * ngx内存池结构
+ */
 struct ngx_pool_s {
-    ngx_pool_data_t       d;
-    size_t                max;
-    ngx_pool_t           *current;
-    ngx_chain_t          *chain;
-    ngx_pool_large_t     *large;
-    ngx_pool_cleanup_t   *cleanup;
-    ngx_log_t            *log;
+    ngx_pool_data_t       d;    /* ngx数据域 */
+    size_t                max;  /* 内存池可用的内存的最大值 */
+    ngx_pool_t           *current;  /* 指向当前内存池(优先分配空间) */
+    ngx_chain_t          *chain;    /* 指向一个 ngx_chain_t 结构 */
+    ngx_pool_large_t     *large;    /* ngx大内存池 链表 */
+    ngx_pool_cleanup_t   *cleanup; /* ngx清除域 */
+    ngx_log_t            *log; /* ngx日志域 */
 };
 
 
+/**
+ * ngx 文件清理 结构
+ */
 typedef struct {
-    ngx_fd_t              fd;
-    u_char               *name;
-    ngx_log_t            *log;
+    ngx_fd_t              fd; /* ngx 文件句柄域 */
+    u_char               *name; /* 字符指针 */
+    ngx_log_t            *log; /* ngx 日志域 */
 } ngx_pool_cleanup_file_t;
 
 

@@ -51,12 +51,13 @@ ngx_array_push(ngx_array_t *a)
     size_t       size;
     ngx_pool_t  *p;
 
+    // 当前数组元素个数等于数组的容量，需要扩容
     if (a->nelts == a->nalloc) {
 
         /* the array is full */
-
+        // 数组空间大小
         size = a->size * a->nalloc;
-
+        // 内存池
         p = a->pool;
 
         if ((u_char *) a->elts + size == p->d.last

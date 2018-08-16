@@ -14,7 +14,14 @@ static ngx_inline void *ngx_palloc_small(ngx_pool_t *pool, size_t size,
 static void *ngx_palloc_block(ngx_pool_t *pool, size_t size);
 static void *ngx_palloc_large(ngx_pool_t *pool, size_t size);
 
-
+/** 
+ * 创建内存池
+ * 
+ * pool.d.last 指向内存池的可用内存起始地址
+ * pool.d.end  指向内存池的可用内存末尾
+ * 
+ * 
+ */
 ngx_pool_t *
 ngx_create_pool(size_t size, ngx_log_t *log)
 {
@@ -25,6 +32,7 @@ ngx_create_pool(size_t size, ngx_log_t *log)
         return NULL;
     }
 
+    // 内存池数据域初始化
     p->d.last = (u_char *) p + sizeof(ngx_pool_t);
     p->d.end = (u_char *) p + size;
     p->d.next = NULL;
@@ -42,7 +50,11 @@ ngx_create_pool(size_t size, ngx_log_t *log)
     return p;
 }
 
-
+/** 
+ * 销毁内存池
+ * 
+ * 
+ */
 void
 ngx_destroy_pool(ngx_pool_t *pool)
 {
@@ -118,7 +130,11 @@ ngx_reset_pool(ngx_pool_t *pool)
     pool->large = NULL;
 }
 
-
+/** 
+ * 从内存池分配内存，并对齐内存
+ * 
+ * 
+ */
 void *
 ngx_palloc(ngx_pool_t *pool, size_t size)
 {
@@ -131,7 +147,11 @@ ngx_palloc(ngx_pool_t *pool, size_t size)
     return ngx_palloc_large(pool, size);
 }
 
-
+/** 
+ * 从内存池分配内存，不保证内存对齐
+ * 
+ * 
+ */
 void *
 ngx_pnalloc(ngx_pool_t *pool, size_t size)
 {
@@ -153,6 +173,7 @@ ngx_palloc_small(ngx_pool_t *pool, size_t size, ngx_uint_t align)
 
     p = pool->current;
 
+    // 遍历：已有的内存池是否可以分配
     do {
         m = p->d.last;
 
@@ -181,13 +202,16 @@ ngx_palloc_block(ngx_pool_t *pool, size_t size)
     size_t       psize;
     ngx_pool_t  *p, *new;
 
+    // 旧的内存池分配的空间大小
     psize = (size_t) (pool->d.end - (u_char *) pool);
 
+    // 申请一块新的内存
     m = ngx_memalign(NGX_POOL_ALIGNMENT, psize, pool->log);
     if (m == NULL) {
         return NULL;
     }
 
+    // 转化为内存池
     new = (ngx_pool_t *) m;
 
     new->d.end = m + psize;
@@ -200,6 +224,7 @@ ngx_palloc_block(ngx_pool_t *pool, size_t size)
 
     for (p = pool->current; p->d.next; p = p->d.next) {
         if (p->d.failed++ > 4) {
+            // 内存池扩容5次后，优先在内存池链表下个内存池分配空间
             pool->current = p->d.next;
         }
     }
@@ -273,7 +298,10 @@ ngx_pmemalign(ngx_pool_t *pool, size_t size, size_t alignment)
     return p;
 }
 
-
+/** 
+ * 内存池的大内存块释放
+ * 
+ */
 ngx_int_t
 ngx_pfree(ngx_pool_t *pool, void *p)
 {
@@ -293,7 +321,10 @@ ngx_pfree(ngx_pool_t *pool, void *p)
     return NGX_DECLINED;
 }
 
-
+/** 
+ * 在内存池中分配内存，并设置为0，返回内存地址
+ * 
+ */
 void *
 ngx_pcalloc(ngx_pool_t *pool, size_t size)
 {
@@ -307,7 +338,11 @@ ngx_pcalloc(ngx_pool_t *pool, size_t size)
     return p;
 }
 
-
+/** 
+ * 添加内存池清理结构体
+ * 
+ * 
+ */
 ngx_pool_cleanup_t *
 ngx_pool_cleanup_add(ngx_pool_t *p, size_t size)
 {

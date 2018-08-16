@@ -97,6 +97,7 @@ typedef intptr_t        ngx_flag_t;
 #define NGX_ALIGNMENT   sizeof(unsigned long)    /* platform word */
 #endif
 
+// 把d已a为最小单位对齐。d为要操作的目标，a为对齐单位，2的n次方。
 #define ngx_align(d, a)     (((d) + (a - 1)) & ~(a - 1))
 #define ngx_align_ptr(p, a)                                                   \
     (u_char *) (((uintptr_t) (p) + ((uintptr_t) a - 1)) & ~((uintptr_t) a - 1))
