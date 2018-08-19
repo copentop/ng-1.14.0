@@ -25,3 +25,26 @@
 
 
 ![img](https://github.com/copentop/ng-1.14.0/blob/master/struct_img/fun_pool_palloc.jpg)
+
+
+
+### 内存池创建大内存块
+
+
+创建条件：如果申请的内存size 大于pool->max，则创建大内存块。
+
+创建逻辑：
+
+1. 先向系统申请size大小的内存。
+2. 在内存池pool可用的内存中申请ngx_pool_large_s的结构体空间，初始化该结构体
+的alloc指向新分配的内存。
+3. 如果大内存块链表next指针为null 或块数大于5时，修正pool->large指向最新分配的
+ngx大内存结构的起始地址。
+
+
+![img](https://github.com/copentop/ng-1.14.0/blob/master/struct_img/fun_pool_palloc_large.jpg)
+
+
+
+
+

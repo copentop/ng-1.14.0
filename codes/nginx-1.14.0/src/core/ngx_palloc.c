@@ -249,6 +249,7 @@ ngx_palloc_large(ngx_pool_t *pool, size_t size)
 
     n = 0;
 
+    // 大内存池，5块内是否有合适的
     for (large = pool->large; large; large = large->next) {
         if (large->alloc == NULL) {
             large->alloc = p;
