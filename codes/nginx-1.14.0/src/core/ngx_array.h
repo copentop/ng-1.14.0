@@ -12,13 +12,17 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 
-
+/** 
+ * ngx数组
+ * 
+ * 
+ */
 typedef struct {
-    void        *elts;
-    ngx_uint_t   nelts;
-    size_t       size;
-    ngx_uint_t   nalloc;
-    ngx_pool_t  *pool;
+    void        *elts;  /* 数组元素的起始地址 */
+    ngx_uint_t   nelts; /* 当前元素个数 */
+    size_t       size;  /* 每个元素的大小 */
+    ngx_uint_t   nalloc;/* 数组的容量 */
+    ngx_pool_t  *pool;  /* 分配数组空间的内存池 */
 } ngx_array_t;
 
 

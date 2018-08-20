@@ -60,6 +60,8 @@ ngx_array_push(ngx_array_t *a)
         // 内存池
         p = a->pool;
 
+        // 内存池上可用地址的起始地址是数组的元素末尾地址(避免数组地址不连续)，
+        // 而且可用地址允许分配数组元素
         if ((u_char *) a->elts + size == p->d.last
             && p->d.last + a->size <= p->d.end)
         {
@@ -74,7 +76,7 @@ ngx_array_push(ngx_array_t *a)
         } else {
             /* allocate a new array */
 
-            new = ngx_palloc(p, 2 * size);
+            new = ngx_palloc(p, 2 * size); // 扩容为原来的一倍
             if (new == NULL) {
                 return NULL;
             }

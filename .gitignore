@@ -1,1 +1,5 @@
 .DS_Store
+!./codes/examples/*.c
+!./codes/examples/*.h
+!./codes/examples/*.md
+!./codes/examples/*Makefile
