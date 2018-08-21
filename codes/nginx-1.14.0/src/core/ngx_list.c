@@ -8,7 +8,10 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 
-
+/** 
+ * 创建链表
+ * 
+ */
 ngx_list_t *
 ngx_list_create(ngx_pool_t *pool, ngx_uint_t n, size_t size)
 {
@@ -26,7 +29,10 @@ ngx_list_create(ngx_pool_t *pool, ngx_uint_t n, size_t size)
     return list;
 }
 
-
+/** 
+ * 链表添加元素，返回元素的地址
+ * 
+ */
 void *
 ngx_list_push(ngx_list_t *l)
 {
@@ -35,6 +41,8 @@ ngx_list_push(ngx_list_t *l)
 
     last = l->last;
 
+    // 元素个数和容量相等
+    // 扩容
     if (last->nelts == l->nalloc) {
 
         /* the last part is full, allocate a new list part */
@@ -52,8 +60,8 @@ ngx_list_push(ngx_list_t *l)
         last->nelts = 0;
         last->next = NULL;
 
-        l->last->next = last;
-        l->last = last;
+        l->last->next = last; 
+        l->last = last;     // 修正list当前可用节点
     }
 
     elt = (char *) last->elts + l->size * last->nelts;
