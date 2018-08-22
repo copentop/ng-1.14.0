@@ -29,7 +29,11 @@ struct ngx_queue_s {
 #define ngx_queue_empty(h)                                                    \
     (h == (h)->prev)
 
-
+/**
+ * 在后面插入节点
+ * 
+ * 
+ */
 #define ngx_queue_insert_head(h, x)                                           \
     (x)->next = (h)->next;                                                    \
     (x)->next->prev = x;                                                      \
