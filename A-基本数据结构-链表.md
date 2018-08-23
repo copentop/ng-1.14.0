@@ -1,6 +1,11 @@
 ### A-基本数据结构
 
 
+链表
+
+    ngx_list.h
+    ngx_list.c	
+
 #### 链表
 
 链表节点结构：ngx_list_part_s 

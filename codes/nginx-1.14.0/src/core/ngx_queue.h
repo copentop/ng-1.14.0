@@ -43,7 +43,10 @@ struct ngx_queue_s {
 
 #define ngx_queue_insert_after   ngx_queue_insert_head
 
-
+/** 
+ * 前面插入新节点
+ * 
+ */
 #define ngx_queue_insert_tail(h, x)                                           \
     (x)->prev = (h)->prev;                                                    \
     (x)->prev->next = x;                                                      \
@@ -81,13 +84,20 @@ struct ngx_queue_s {
 
 #else
 
+/** 
+ * 删除节点
+ * 
+ */
 #define ngx_queue_remove(x)                                                   \
     (x)->next->prev = (x)->prev;                                              \
     (x)->prev->next = (x)->next
 
 #endif
 
-
+/** 
+ * 分隔队列为两个队列，n作为新队列头节点
+ * 
+ */
 #define ngx_queue_split(h, q, n)                                              \
     (n)->prev = (h)->prev;                                                    \
     (n)->prev->next = n;                                                      \
@@ -96,7 +106,10 @@ struct ngx_queue_s {
     (h)->prev->next = h;                                                      \
     (q)->prev = n;
 
-
+/**
+ * 两个队列合并为一个队列，h作为队列的头节点 
+ * 
+ */
 #define ngx_queue_add(h, n)                                                   \
     (h)->prev->next = (n)->next;                                              \
     (n)->next->prev = (h)->prev;                                              \

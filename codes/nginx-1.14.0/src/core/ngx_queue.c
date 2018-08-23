@@ -47,6 +47,10 @@ ngx_queue_middle(ngx_queue_t *queue)
 
 /* the stable insertion sort */
 
+/** 
+ * 队列排序(插入排序，升序)
+ * 
+ */
 void
 ngx_queue_sort(ngx_queue_t *queue,
     ngx_int_t (*cmp)(const ngx_queue_t *, const ngx_queue_t *))
