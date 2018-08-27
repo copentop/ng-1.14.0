@@ -11,7 +11,7 @@
 ngx双向队列构体： ngx_queue_s
 
 	prev	ngx队列指针类型，前置节点
-	next	ngx队列指针类型，后缀节点
+	next	ngx队列指针类型，后置节点
 
 ```c
 typedef struct ngx_queue_s  ngx_queue_t;

@@ -244,7 +244,14 @@ ngx_hash_find_combined(ngx_hash_combined_t *hash, ngx_uint_t key, u_char *name,
     return NULL;
 }
 
-
+/**
+ * hash 元素内存大小(内存对齐)
+ * 
+ * value -> sizeof(void *)
+ * 
+ * 加2 理解为字符串空字符NUL 和 一个字符的数组
+ * 
+ */
 #define NGX_HASH_ELT_SIZE(name)                                               \
     (sizeof(void *) + ngx_align((name)->key.len + 2, sizeof(void *)))
 
@@ -265,7 +272,12 @@ ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
         return NGX_ERROR;
     }
 
+    /* 若每个桶bucket的内存空间不足以存储一个关键字元素，则出错返回
+     * 这里考虑到了每个bucket桶最后的null指针所需的空间，即该语句中的sizeof(void *)，
+     * 该指针可作为查找过程中的结束标记
+     */
     for (n = 0; n < nelts; n++) {
+        // 是确保一个 bucket 至少能存放一个实际元素以及结束哨兵(NULL)
         if (hinit->bucket_size < NGX_HASH_ELT_SIZE(&names[n]) + sizeof(void *))
         {
             ngx_log_error(NGX_LOG_EMERG, hinit->pool->log, 0,
@@ -396,6 +408,7 @@ found:
         test[i] = 0;
     }
 
+    /* 依次向各个bucket中填充实际数据 */
     for (n = 0; n < nelts; n++) {
         if (names[n].key.data == NULL) {
             continue;
@@ -409,9 +422,11 @@ found:
 
         ngx_strlow(elt->name, names[n].key.data, names[n].key.len);
 
+        /* test[key]记录当前bucket内容的填充位置，即下一次填充的起始位置 */
         test[key] = (u_short) (test[key] + NGX_HASH_ELT_SIZE(&names[n]));
     }
 
+    /* 设置bucket结束位置的null指针 */
     for (i = 0; i < size; i++) {
         if (buckets[i] == NULL) {
             continue;
@@ -605,14 +620,17 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
     return NGX_OK;
 }
 
-
+/** 
+ * DJBX33A算法相似实现
+ *
+ */
 ngx_uint_t
 ngx_hash_key(u_char *data, size_t len)
 {
     ngx_uint_t  i, key;
 
     key = 0;
-
+    // ((ngx_uint_t) key * 31 + c)
     for (i = 0; i < len; i++) {
         key = ngx_hash(key, data[i]);
     }
