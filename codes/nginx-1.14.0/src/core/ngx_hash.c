@@ -293,8 +293,11 @@ ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
         return NGX_ERROR;
     }
 
+    // bucket大小(减去哨兵NULL)
     bucket_size = hinit->bucket_size - sizeof(void *);
 
+    // 计算所需 bucket 的最小个数
+    // 存储一个实际元素所需的内存空间的最小值是(2 * sizeof(void *))
     start = nelts / (bucket_size / (2 * sizeof(void *)));
     start = start ? start : 1;
 
