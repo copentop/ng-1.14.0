@@ -298,23 +298,29 @@ ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
 
     // 计算所需 bucket 的最小个数
     // 存储一个实际元素所需的内存空间的最小值是(2 * sizeof(void *))
+    // ngx_hash_elt_t 的value 一个，len和name占用一个
     start = nelts / (bucket_size / (2 * sizeof(void *)));
     start = start ? start : 1;
 
+    // 经验值设定
     if (hinit->max_size > 10000 && nelts && hinit->max_size / nelts < 100) {
         start = hinit->max_size - 1000;
     }
 
+    // 
     for (size = start; size <= hinit->max_size; size++) {
 
         ngx_memzero(test, size * sizeof(u_short));
 
         for (n = 0; n < nelts; n++) {
+            // hash键 字符串没有内容
             if (names[n].key.data == NULL) {
                 continue;
             }
 
+            // hash求余
             key = names[n].key_hash % size;
+            /* 根据关键字元素的hash值计算存在到测试数组test对应的位置中，即计算bucket在hash表中的编号key,key取值为0～size-1 */
             test[key] = (u_short) (test[key] + NGX_HASH_ELT_SIZE(&names[n]));
 
 #if 0
@@ -323,6 +329,9 @@ ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
                           size, key, test[key], &names[n].key);
 #endif
 
+            /* test数组中对应的内存大于每个桶bucket最大内存，则需扩充bucket的数量
+             * 即在start的基础上继续增加size的值
+             */
             if (test[key] > (u_short) bucket_size) {
                 goto next;
             }
@@ -345,11 +354,16 @@ ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
                   hinit->name, hinit->bucket_size, hinit->name);
 
 found:
-
+    /* 到此已经找到合适的bucket数量，即为size
+     * 重新初始化test数组元素，初始值为一个指针大小
+     */
     for (i = 0; i < size; i++) {
         test[i] = sizeof(void *);
     }
 
+    /* 计算每个bucket中关键字所占的空间，即每个bucket实际所容纳数据的大小，
+     * 必须注意的是：test[i]中还有一个指针大小
+     */
     for (n = 0; n < nelts; n++) {
         if (names[n].key.data == NULL) {
             continue;
@@ -360,7 +374,8 @@ found:
     }
 
     len = 0;
-
+    
+    /* 调整成对齐到cacheline的大小，并记录所有元素的总长度 */
     for (i = 0; i < size; i++) {
         if (test[i] == sizeof(void *)) {
             continue;
