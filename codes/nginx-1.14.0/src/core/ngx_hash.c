@@ -288,6 +288,11 @@ ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
         }
     }
 
+    /*
+	 * test是用来做探测用的，探测的目标是在当前bucket的数量下，冲突发生的是否频繁。
+	 * 过于频繁则需要调整桶的个数。
+	 * 检查是否频繁的标准是：判断元素总长度和bucket桶的容量bucket_size做比较
+	 */
     test = ngx_alloc(hinit->max_size * sizeof(u_short), hinit->pool->log);
     if (test == NULL) {
         return NGX_ERROR;
@@ -307,9 +312,10 @@ ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
         start = hinit->max_size - 1000;
     }
 
-    // 
+    // 最少需要size个bucket 
+    // 从size 到 max_size，看哪个档次size最适合
     for (size = start; size <= hinit->max_size; size++) {
-
+        
         ngx_memzero(test, size * sizeof(u_short));
 
         for (n = 0; n < nelts; n++) {
@@ -321,6 +327,7 @@ ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
             // hash求余
             key = names[n].key_hash % size;
             /* 根据关键字元素的hash值计算存在到测试数组test对应的位置中，即计算bucket在hash表中的编号key,key取值为0～size-1 */
+            // 该bucket上累加元素大小，如果大于bucket_size，则需要扩展bucket个数
             test[key] = (u_short) (test[key] + NGX_HASH_ELT_SIZE(&names[n]));
 
 #if 0
@@ -386,6 +393,11 @@ found:
         len += test[i];
     }
 
+    /*
+     * hash 表没有分配
+     * 提前分配  ngx_hash_wildcard_t
+     * 和 size 个hash元素指针
+     */
     if (hinit->hash == NULL) {
         hinit->hash = ngx_pcalloc(hinit->pool, sizeof(ngx_hash_wildcard_t)
                                              + size * sizeof(ngx_hash_elt_t *));
@@ -405,6 +417,7 @@ found:
         }
     }
 
+    // 分配元素空间
     elts = ngx_palloc(hinit->pool, len + ngx_cacheline_size);
     if (elts == NULL) {
         ngx_free(test);
@@ -412,7 +425,7 @@ found:
     }
 
     elts = ngx_align_ptr(elts, ngx_cacheline_size);
-
+    // 分配每个bucket起始指向
     for (i = 0; i < size; i++) {
         if (test[i] == sizeof(void *)) {
             continue;
@@ -422,6 +435,7 @@ found:
         elts += test[i];
     }
 
+    /* 清空test数组，以便用来累计实际数据的长度，这里不计算结尾指针的长度 */
     for (i = 0; i < size; i++) {
         test[i] = 0;
     }
@@ -433,6 +447,7 @@ found:
         }
 
         key = names[n].key_hash % size;
+        // 
         elt = (ngx_hash_elt_t *) ((u_char *) buckets[key] + test[key]);
 
         elt->value = names[n].value;
@@ -441,6 +456,7 @@ found:
         ngx_strlow(elt->name, names[n].key.data, names[n].key.len);
 
         /* test[key]记录当前bucket内容的填充位置，即下一次填充的起始位置 */
+        // 即统计了该key上的元素个数
         test[key] = (u_short) (test[key] + NGX_HASH_ELT_SIZE(&names[n]));
     }
 

@@ -32,8 +32,8 @@ typedef struct {
  * 
  */
 typedef struct {
-    ngx_hash_elt_t  **buckets;
-    ngx_uint_t        size;
+    ngx_hash_elt_t  **buckets;  /* bucket 数组，每个元素指向elt链表 */
+    ngx_uint_t        size;     /* bucket 个数*/
 } ngx_hash_t;
 
 
@@ -79,7 +79,7 @@ typedef struct {
     ngx_hash_key_pt   key;
 
     ngx_uint_t        max_size;
-    ngx_uint_t        bucket_size;
+    ngx_uint_t        bucket_size; /* 每个bucket 的大小 */
 
     char             *name; /* hash 名称 */
     ngx_pool_t       *pool; /* 分配空间的内存池 */
