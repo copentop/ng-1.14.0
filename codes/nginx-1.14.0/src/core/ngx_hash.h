@@ -19,7 +19,7 @@
 typedef struct {
     void             *value;
     u_short           len;
-    u_char            name[1];
+    u_char            name[1]; /*保存ngx_str_t类型的data*/
 } ngx_hash_elt_t;
 
 

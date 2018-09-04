@@ -249,7 +249,7 @@ ngx_hash_find_combined(ngx_hash_combined_t *hash, ngx_uint_t key, u_char *name,
  * 
  * value -> sizeof(void *)
  * 
- * 加2 理解为字符串空字符NUL 和 一个字符的数组
+ * 加2 理解为unsinged short 固定2个字节
  * 
  */
 #define NGX_HASH_ELT_SIZE(name)                                               \
@@ -275,6 +275,8 @@ ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
     /* 若每个桶bucket的内存空间不足以存储一个关键字元素，则出错返回
      * 这里考虑到了每个bucket桶最后的null指针所需的空间，即该语句中的sizeof(void *)，
      * 该指针可作为查找过程中的结束标记
+     * 
+     * 每个实际元素大小是不确定的，需要检测一遍
      */
     for (n = 0; n < nelts; n++) {
         // 是确保一个 bucket 至少能存放一个实际元素以及结束哨兵(NULL)
@@ -298,7 +300,7 @@ ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
         return NGX_ERROR;
     }
 
-    // bucket大小(减去哨兵NULL)
+    // 每个bucket大小(减去哨兵NULL)
     bucket_size = hinit->bucket_size - sizeof(void *);
 
     // 计算所需 bucket 的最小个数
