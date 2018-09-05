@@ -8,7 +8,10 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 
-
+/**
+ * 查找hash值为key,名字为name,名字长度为len的内容
+ * 
+ */
 void *
 ngx_hash_find(ngx_hash_t *hash, ngx_uint_t key, u_char *name, size_t len)
 {
@@ -18,7 +21,7 @@ ngx_hash_find(ngx_hash_t *hash, ngx_uint_t key, u_char *name, size_t len)
 #if 0
     ngx_log_error(NGX_LOG_ALERT, ngx_cycle->log, 0, "hf:\"%*s\"", len, name);
 #endif
-
+    // 指向具体bucket
     elt = hash->buckets[key % hash->size];
 
     if (elt == NULL) {
@@ -26,10 +29,11 @@ ngx_hash_find(ngx_hash_t *hash, ngx_uint_t key, u_char *name, size_t len)
     }
 
     while (elt->value) {
+        // 优先判断name的len是否相等
         if (len != (size_t) elt->len) {
             goto next;
         }
-
+        // 判断name 是否相等
         for (i = 0; i < len; i++) {
             if (name[i] != elt->name[i]) {
                 goto next;
@@ -39,7 +43,7 @@ ngx_hash_find(ngx_hash_t *hash, ngx_uint_t key, u_char *name, size_t len)
         return elt->value;
 
     next:
-
+        // 偏移
         elt = (ngx_hash_elt_t *) ngx_align_ptr(&elt->name[0] + elt->len,
                                                sizeof(void *));
         continue;
@@ -71,6 +75,8 @@ ngx_hash_find_wc_head(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
 
     key = 0;
 
+    // #define ngx_hash(key, c)   ((ngx_uint_t) key * 31 + c)
+    // 字符串去掉通配符dian(.)后的hash值
     for (i = n; i < len; i++) {
         key = ngx_hash(key, name[i]);
     }
@@ -98,6 +104,7 @@ ngx_hash_find_wc_head(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
          *          "*.example.com" only.
          */
 
+        // 10 或 11
         if ((uintptr_t) value & 2) {
 
             if (n == 0) {
@@ -123,7 +130,8 @@ ngx_hash_find_wc_head(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
 
             return hwc->value;
         }
-
+        
+        // 01 或者 11
         if ((uintptr_t) value & 1) {
 
             if (n == 0) {
