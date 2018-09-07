@@ -52,7 +52,10 @@ ngx_hash_find(ngx_hash_t *hash, ngx_uint_t key, u_char *name, size_t len)
     return NULL;
 }
 
-
+/** 
+ * 优先从末尾开始查找点(.)字符后面的子字符串，没有时使用整个字符串。
+ * 
+ */
 void *
 ngx_hash_find_wc_head(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
 {
@@ -105,6 +108,13 @@ ngx_hash_find_wc_head(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
          */
 
         // 10 或 11
+        /**
+         *    10        11
+         *    10        10
+         * -----      -----
+         *    10        10
+         * 
+         */
         if ((uintptr_t) value & 2) {
 
             if (n == 0) {
@@ -132,6 +142,13 @@ ngx_hash_find_wc_head(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
         }
         
         // 01 或者 11
+        /**
+         *    01        11
+         *    01        01
+         * -----      -----
+         *    01        01
+         * 
+         */
         if ((uintptr_t) value & 1) {
 
             if (n == 0) {
@@ -519,7 +536,11 @@ found:
     return NGX_OK;
 }
 
-
+/** 
+ * 带通配符功能的hash初始化
+ * 
+ * 
+ */
 ngx_int_t
 ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
     ngx_uint_t nelts)
@@ -531,6 +552,9 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
     ngx_hash_init_t       h;
     ngx_hash_wildcard_t  *wdc;
 
+    /** 
+     * 分配hash的键数组
+     */
     if (ngx_array_init(&curr_names, hinit->temp_pool, nelts,
                        sizeof(ngx_hash_key_t))
         != NGX_OK)
@@ -538,6 +562,9 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
         return NGX_ERROR;
     }
 
+    /** 
+     * 分配hash的键数组
+     */
     if (ngx_array_init(&next_names, hinit->temp_pool, nelts,
                        sizeof(ngx_hash_key_t))
         != NGX_OK)
@@ -545,6 +572,9 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
         return NGX_ERROR;
     }
 
+    /**
+     * 遍历元素
+     */
     for (n = 0; n < nelts; n = i) {
 
 #if 0
@@ -554,6 +584,9 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
 
         dot = 0;
 
+        /**
+         * 遍历字符串，如果有通配符，则提前退出 
+         */
         for (len = 0; len < names[n].key.len; len++) {
             if (names[n].key.data[len] == '.') {
                 dot = 1;
@@ -561,11 +594,13 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
             }
         }
 
+        // 分配数组元素空间
         name = ngx_array_push(&curr_names);
         if (name == NULL) {
             return NGX_ERROR;
         }
 
+        // hash 元素初始化
         name->key.len = len;
         name->key.data = names[n].key.data;
         name->key_hash = hinit->key(name->key.data, name->key.len);
@@ -584,6 +619,7 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
 
         next_names.nelts = 0;
 
+        // 有通配符分隔的字符串
         if (names[n].key.len != len) {
             next_name = ngx_array_push(&next_names);
             if (next_name == NULL) {
@@ -601,11 +637,18 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
 #endif
         }
 
+        /**
+         * 上一个元素和剩下所有元素对比
+         */
         for (i = n + 1; i < nelts; i++) {
+            // 不相等的
             if (ngx_strncmp(names[n].key.data, names[i].key.data, len) != 0) {
                 break;
             }
 
+            /**
+             * 没有通配符点, 长度大于上个元素剩余长度，当前长度也不是通配符点
+             */
             if (!dot
                 && names[i].key.len > len
                 && names[i].key.data[len] != '.')
@@ -629,11 +672,18 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
 #endif
         }
 
+        /**
+         * 有通配符分隔的字符串
+         * 
+         * 递归调用，直到没有通配符点分隔的字符串
+         * 
+         */
         if (next_names.nelts) {
 
             h = *hinit;
             h.hash = NULL;
 
+            
             if (ngx_hash_wildcard_init(&h, (ngx_hash_key_t *) next_names.elts,
                                        next_names.nelts)
                 != NGX_OK)
@@ -652,7 +702,8 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
         } else if (dot) {
             name->value = (void *) ((uintptr_t) name->value | 1);
         }
-    }
+
+    } // 结束遍历元素
 
     if (ngx_hash_init(hinit, (ngx_hash_key_t *) curr_names.elts,
                       curr_names.nelts)
